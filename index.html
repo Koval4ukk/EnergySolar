@@ -24,6 +24,7 @@
 <body>
   <div id="map"></div>
   <select id="styleSelector">
+    <option value="mapbox://styles/digydep/cly7kz4yv00g601pmbyv073b7">Загальна</option>
     <option value="mapbox://styles/digydep/clxuac41l00ug01qr2opbaeb4">Сонячна</option>
     <option value="mapbox://styles/digydep/cly2zqdq9006901pibaryao4q">Гідро</option>
     <option value="mapbox://styles/digydep/cly79tbbg008y01pfdgz534bg">Біо</option>
@@ -46,7 +47,7 @@
 
     const addPopup = (layer, property) => {
       // Remove existing click event listeners for all layers
-      ['Energy', 'Hydro', 'Bio'].forEach(l => map.off('click', l));
+      ['Complete','Solar', 'Hydro', 'Bio'].forEach(l => map.off('click', l));
       // Add new click event listener for the active layer
       map.on('click', layer, function (e) {
         new mapboxgl.Popup()
@@ -70,7 +71,8 @@
 
     const styleSelector = document.getElementById('styleSelector');
     const styles = {
-      'mapbox://styles/digydep/clxuac41l00ug01qr2opbaeb4': 'Energy',
+      'mapbox://styles/digydep/clxuac41l00ug01qr2opbaeb4': 'Complete',
+      'mapbox://styles/digydep/clxuac41l00ug01qr2opbaeb4': 'Solar',
       'mapbox://styles/digydep/cly2zqdq9006901pibaryao4q': 'Hydro',
       'mapbox://styles/digydep/cly79tbbg008y01pfdgz534bg': 'Bio'
     };
