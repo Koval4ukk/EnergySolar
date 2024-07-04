@@ -10,7 +10,7 @@
   <style>
     body { margin: 0; padding: 0; }
     #map { position: absolute; top: 0; bottom: 0; width: 100%; }
-    #styleSwitcher {
+    #styleSelector {
       position: absolute;
       top: 10px;
       right: 10px;
@@ -23,44 +23,42 @@
 </head>
 <body>
   <div id="map"></div>
-  <button id="styleSwitcher">Переключити</button>
+  <select id="styleSelector">
+    <option value="mapbox://styles/digydep/clxuac41l00ug01qr2opbaeb4">Сонячна</option>
+    <option value="mapbox://styles/digydep/cly2zqdq9006901pibaryao4q">Гідро</option>
+    <option value="mapbox://styles/digydep/cly79tbbg008y01pfdgz534bg">Біо</option>
+  </select>
   <script>
     mapboxgl.accessToken = 'pk.eyJ1IjoiZGlneWRlcCIsImEiOiJjbGYxNDQwMTIwNHJkM3hyMGdzYzM0djFjIn0.7jGv0vgJNN3BdxdQZoQY4g';
     const bounds = [
-      [22.06211,47.86616], // Southwest coordinates
-      [24.7041023,49.12407]  // Northeast coordinates  
+      [22.06211, 47.86616], // Southwest coordinates
+      [24.7041023, 49.12407]  // Northeast coordinates  
     ];
     const map = new mapboxgl.Map({
       container: 'map', // container ID
       style: 'mapbox://styles/digydep/clxuac41l00ug01qr2opbaeb4', // initial style URL
-      center: [23.290417,48.392914], // starting position [lng, lat]
+      center: [23.290417, 48.392914], // starting position [lng, lat]
       zoom: 8.26, // starting zoom
       maxBounds: bounds,
       maxZoom: 16,
       pitch: 25
     });
 
-    const layers = ['Energy','Hydro'];
-    map.on('mouseenter', layers, function () {
-      map.getCanvas().style.cursor = 'pointer';
-    });
+    const addPopup = (layer, property) => {
+      // Remove existing click event listeners for all layers
+      ['Energy', 'Hydro', 'Bio'].forEach(l => map.off('click', l));
+      // Add new click event listener for the active layer
+      map.on('click', layer, function (e) {
+        new mapboxgl.Popup()
+          .setLngLat(e.lngLat)
+          .setHTML(e.features[0].properties.name + '</p>' + e.features[0].properties[property])
+          .addTo(map);
+      });
+    };
 
-    map.on('mouseleave', layers, function () {
-      map.getCanvas().style.cursor = '';
-    });
-
-    map.on('click', 'Energy', function (e) {
-      new mapboxgl.Popup()
-        .setLngLat(e.lngLat)
-        .setHTML(e.features[0].properties.name + '</p>' + e.features[0].properties.solarName)
-        .addTo(map);
-    });
-
-    map.on('click', 'Hydro', function (e) {
-      new mapboxgl.Popup()
-        .setLngLat(e.lngLat)
-        .setHTML(e.features[0].properties.name + '</p>' + e.features[0].properties.hydroName)
-        .addTo(map);
+    // Initial popup for the first style
+    map.on('style.load', () => {
+      addPopup('Energy', 'solarName');
     });
 
     document.querySelector('.mapboxgl-ctrl-bottom-right').innerHTML = 'Розробка Закарпатської ОВА (С)';
@@ -70,16 +68,24 @@
     document.querySelector('.logo').style.paddingLeft = '40px';
     document.querySelector('.logo').style.paddingBottom = '40px';
 
-    const styleSwitcherButton = document.getElementById('styleSwitcher');
-    const styles = [
-      'mapbox://styles/digydep/clxuac41l00ug01qr2opbaeb4', // initial style
-      'mapbox://styles/digydep/cly2zqdq9006901pibaryao4q'  // second style
-    ];
-    let currentStyleIndex = 0;
+    const styleSelector = document.getElementById('styleSelector');
+    const styles = {
+      'mapbox://styles/digydep/clxuac41l00ug01qr2opbaeb4': 'Energy',
+      'mapbox://styles/digydep/cly2zqdq9006901pibaryao4q': 'Hydro',
+      'mapbox://styles/digydep/cly79tbbg008y01pfdgz534bg': 'Bio'
+    };
+    const properties = {
+      'mapbox://styles/digydep/clxuac41l00ug01qr2opbaeb4': 'solarName',
+      'mapbox://styles/digydep/cly2zqdq9006901pibaryao4q': 'hydroName',
+      'mapbox://styles/digydep/cly79tbbg008y01pfdgz534bg': 'bioName'
+    };
 
-    styleSwitcherButton.addEventListener('click', () => {
-      currentStyleIndex = (currentStyleIndex + 1) % styles.length;
-      map.setStyle(styles[currentStyleIndex]);
+    styleSelector.addEventListener('change', () => {
+      const selectedStyle = styleSelector.value;
+      map.setStyle(selectedStyle);
+      map.once('styledata', () => {
+        addPopup(styles[selectedStyle], properties[selectedStyle]);
+      });
     });
   </script>
 </body>
