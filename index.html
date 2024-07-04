@@ -47,14 +47,19 @@
 
     const addPopup = (layer, property) => {
       // Remove existing click event listeners for all layers
-      ['Complete', 'Solar', 'Hydro', 'Bio'].forEach(l => map.off('click', l));
+      ['Complete', 'Solar', 'Hydro', 'Bio'].forEach(l => {
+        map.off('click', l);
+        map.off('touchstart', l);
+      });
       // Add new click event listener for the active layer
-      map.on('click', layer, function (e) {
+      const popupHandler = function (e) {
         new mapboxgl.Popup()
           .setLngLat(e.lngLat)
           .setHTML(e.features[0].properties.name + '</p>' + e.features[0].properties[property])
           .addTo(map);
-      });
+      };
+      map.on('click', layer, popupHandler);
+      map.on('touchstart', layer, popupHandler);
     };
 
     // Initial popup for the first style
