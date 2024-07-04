@@ -47,7 +47,7 @@
 
     const addPopup = (layer, property) => {
       // Remove existing click event listeners for all layers
-      ['Complete','Solar', 'Hydro', 'Bio'].forEach(l => map.off('click', l));
+      ['Complete', 'Solar', 'Hydro', 'Bio'].forEach(l => map.off('click', l));
       // Add new click event listener for the active layer
       map.on('click', layer, function (e) {
         new mapboxgl.Popup()
@@ -59,7 +59,7 @@
 
     // Initial popup for the first style
     map.on('style.load', () => {
-      addPopup('Energy', 'solarName');
+      addPopup('Complete', 'solarName');
     });
 
     document.querySelector('.mapboxgl-ctrl-bottom-right').innerHTML = 'Розробка Закарпатської ОВА (С)';
@@ -71,12 +71,13 @@
 
     const styleSelector = document.getElementById('styleSelector');
     const styles = {
-      'mapbox://styles/digydep/clxuac41l00ug01qr2opbaeb4': 'Complete',
+      'mapbox://styles/digydep/cly7kz4yv00g601pmbyv073b7': 'Complete',
       'mapbox://styles/digydep/clxuac41l00ug01qr2opbaeb4': 'Solar',
       'mapbox://styles/digydep/cly2zqdq9006901pibaryao4q': 'Hydro',
       'mapbox://styles/digydep/cly79tbbg008y01pfdgz534bg': 'Bio'
     };
     const properties = {
+      'mapbox://styles/digydep/cly7kz4yv00g601pmbyv073b7': 'solarName',
       'mapbox://styles/digydep/clxuac41l00ug01qr2opbaeb4': 'solarName',
       'mapbox://styles/digydep/cly2zqdq9006901pibaryao4q': 'hydroName',
       'mapbox://styles/digydep/cly79tbbg008y01pfdgz534bg': 'bioName'
