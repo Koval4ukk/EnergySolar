@@ -45,26 +45,41 @@
       pitch: 25
     });
 
-    const addPopup = (layer, property) => {
-      // Remove existing click event listeners for all layers
-      ['Complete', 'Solar', 'Hydro', 'Bio'].forEach(l => {
-        map.off('click', l);
-        map.off('touchstart', l);
-      });
-      // Add new click event listener for the active layer
+    let currentPopup = null; // Variable to track the current popup
+
+    const addPopup = (property) => {
+      console.log(`Attempting to add popup for property: ${property}`);
       const popupHandler = function (e) {
-        new mapboxgl.Popup()
+        console.log('Feature clicked:', e.features[0].properties);
+        if (currentPopup) {
+          currentPopup.remove(); // Close the existing popup
+        }
+        const content = e.features[0].properties.name + '</p>' + e.features[0].properties[property];
+        currentPopup = new mapboxgl.Popup()
           .setLngLat(e.lngLat)
-          .setHTML(e.features[0].properties.name + '</p>' + e.features[0].properties[property])
+          .setHTML(content)
           .addTo(map);
       };
-      map.on('click', layer, popupHandler);
-      map.on('touchstart', layer, popupHandler);
+
+      // Remove previous event listeners
+      map.off('click', 'Energy');
+
+      if (map.getLayer('Energy')) {
+        console.log('Layer Energy exists');
+        map.on('click', 'Energy', popupHandler);
+      } else {
+        console.error('Layer Energy does not exist');
+      }
     };
 
-    // Initial popup for the first style
     map.on('style.load', () => {
-      addPopup('Complete', 'solarName');
+      console.log('Initial style loaded');
+      const initialProperty = 'solarName'; // Default property for the initial style
+      setTimeout(() => addPopup(initialProperty), 1000); // Delay to ensure the layer is loaded
+    });
+
+    map.on('error', (e) => {
+      console.error('Map error:', e.error.message);
     });
 
     document.querySelector('.mapboxgl-ctrl-bottom-right').innerHTML = 'Розробка Закарпатської ОВА (С)';
@@ -75,12 +90,6 @@
     document.querySelector('.logo').style.paddingBottom = '40px';
 
     const styleSelector = document.getElementById('styleSelector');
-    const styles = {
-      'mapbox://styles/digydep/cly7kz4yv00g601pmbyv073b7': 'Complete',
-      'mapbox://styles/digydep/clxuac41l00ug01qr2opbaeb4': 'Solar',
-      'mapbox://styles/digydep/cly2zqdq9006901pibaryao4q': 'Hydro',
-      'mapbox://styles/digydep/cly79tbbg008y01pfdgz534bg': 'Bio'
-    };
     const properties = {
       'mapbox://styles/digydep/cly7kz4yv00g601pmbyv073b7': 'solarName',
       'mapbox://styles/digydep/clxuac41l00ug01qr2opbaeb4': 'solarName',
@@ -90,10 +99,16 @@
 
     styleSelector.addEventListener('change', () => {
       const selectedStyle = styleSelector.value;
-      map.setStyle(selectedStyle);
-      map.once('styledata', () => {
-        addPopup(styles[selectedStyle], properties[selectedStyle]);
-      });
+      try {
+        console.log(`Changing style to: ${selectedStyle}`);
+        map.setStyle(selectedStyle);
+        map.once('style.load', () => {
+          console.log('Style data loaded');
+          setTimeout(() => addPopup(properties[selectedStyle]), 1000); // Delay to ensure the layer is loaded
+        });
+      } catch (error) {
+        console.error('Error setting style:', error);
+      }
     });
   </script>
 </body>
