@@ -35,11 +35,15 @@
       [22.06211, 47.86616], // Southwest coordinates
       [24.7041023, 49.12407]  // Northeast coordinates  
     ];
+    const initialCenter = [23.290417, 48.392914];
+    const initialZoom = 8.26;
+    const initialBearing = 0;
+
     const map = new mapboxgl.Map({
       container: 'map', // container ID
       style: 'mapbox://styles/digydep/cly7kz4yv00g601pmbyv073b7', // initial style URL
-      center: [23.290417, 48.392914], // starting position [lng, lat]
-      zoom: 8.26, // starting zoom
+      center: initialCenter, // starting position [lng, lat]
+      zoom: initialZoom, // starting zoom
       maxBounds: bounds,
       maxZoom: 16,
       pitch: 25
@@ -47,33 +51,79 @@
 
     let currentPopup = null; // Variable to track the current popup
 
-    const addPopup = (property) => {
-      console.log(`Attempting to add popup for property: ${property}`);
-      const popupHandler = function (e) {
-        console.log('Feature clicked:', e.features[0].properties);
+    // Function to load the locations from the JSON file
+    const loadLocations = async () => {
+      try {
+        const response = await fetch('locations.json');
+        const locations = await response.json();
+        return locations;
+      } catch (error) {
+        console.error('Error loading locations:', error);
+        return {};
+      }
+    };
+
+    const addPopup = async (property) => {
+      const locations = await loadLocations();
+
+      const popupHandler = (e) => {
         if (currentPopup) {
           currentPopup.remove(); // Close the existing popup
         }
-        const content = e.features[0].properties.name + '</p>' + e.features[0].properties[property];
+        const name = e.features[0].properties.name;
+        const propertyValues = e.features[0].properties[property].split(', ');
+        
+        let content = name + '<p>';
+
+        propertyValues.forEach(value => {
+          if (locations[value]) {
+            content += `<a href="#" class="location-link" data-location='${JSON.stringify(locations[value])}'>${value}</a><br>`;
+          } else {
+            content += `<a href="#" class="default-location-link">${value}</a><br>`;
+          }
+        });
+        
+        content += '</p>';
+
         currentPopup = new mapboxgl.Popup()
           .setLngLat(e.lngLat)
           .setHTML(content)
           .addTo(map);
+
+        document.querySelectorAll('.location-link').forEach(link => {
+          link.addEventListener('click', (event) => {
+            event.preventDefault();
+            const location = JSON.parse(event.target.getAttribute('data-location'));
+            map.flyTo({
+              center: [location.lon, location.lat],
+              zoom: location.zoom,
+              bearing: location.bearing,
+              essential: true // This animation is considered essential with respect to prefers-reduced-motion
+            });
+          });
+        });
+
+        document.querySelectorAll('.default-location-link').forEach(link => {
+          link.addEventListener('click', (event) => {
+            event.preventDefault();
+            map.flyTo({
+              center: initialCenter,
+              zoom: initialZoom,
+              bearing: initialBearing,
+              essential: true // This animation is considered essential with respect to prefers-reduced-motion
+            });
+          });
+        });
       };
 
-      // Remove previous event listeners
       map.off('click', 'Energy');
 
       if (map.getLayer('Energy')) {
-        console.log('Layer Energy exists');
         map.on('click', 'Energy', popupHandler);
-      } else {
-        console.error('Layer Energy does not exist');
       }
     };
 
     map.on('style.load', () => {
-      console.log('Initial style loaded');
       const initialProperty = 'solarName'; // Default property for the initial style
       setTimeout(() => addPopup(initialProperty), 1000); // Delay to ensure the layer is loaded
     });
@@ -100,10 +150,8 @@
     styleSelector.addEventListener('change', () => {
       const selectedStyle = styleSelector.value;
       try {
-        console.log(`Changing style to: ${selectedStyle}`);
         map.setStyle(selectedStyle);
         map.once('style.load', () => {
-          console.log('Style data loaded');
           setTimeout(() => addPopup(properties[selectedStyle]), 1000); // Delay to ensure the layer is loaded
         });
       } catch (error) {
