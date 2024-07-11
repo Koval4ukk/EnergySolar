@@ -38,6 +38,7 @@
     const initialCenter = [23.290417, 48.392914];
     const initialZoom = 8.26;
     const initialBearing = 0;
+    const initialPitch = 41;
 
     const map = new mapboxgl.Map({
       container: 'map', // container ID
@@ -45,7 +46,7 @@
       center: initialCenter, // starting position [lng, lat]
       zoom: initialZoom, // starting zoom
       maxBounds: bounds,
-      maxZoom: 16,
+ //     maxZoom: 18,
       pitch: 25
     });
 
@@ -71,7 +72,7 @@
           currentPopup.remove(); // Close the existing popup
         }
         const name = e.features[0].properties.name;
-        const propertyValues = e.features[0].properties[property].split(', ');
+        const propertyValues = e.features[0].properties[property].split(',');
         
         let content = name + '<p>';
 
@@ -98,6 +99,7 @@
               center: [location.lon, location.lat],
               zoom: location.zoom,
               bearing: location.bearing,
+              pitch:location.pitch,
               essential: true // This animation is considered essential with respect to prefers-reduced-motion
             });
           });
@@ -110,6 +112,8 @@
               center: initialCenter,
               zoom: initialZoom,
               bearing: initialBearing,
+              pitch: initialPitch,
+              duration: 10000,
               essential: true // This animation is considered essential with respect to prefers-reduced-motion
             });
           });
